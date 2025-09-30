@@ -4,7 +4,6 @@ import json
 import os
 import sys
 import time
-from typing import Any, Dict, List, Optional
 
 import boto3
 from botocore.config import Config
@@ -12,17 +11,17 @@ from botocore.exceptions import ClientError, EndpointConnectionError, NoCredenti
 
 ISO = "%Y-%m-%dT%H:%M:%SZ"
 
-def utc_now_iso() -> str:
+def utc_now_iso():
     return dt.datetime.utcnow().strftime(ISO)
 
 
-def human_mb(nbytes: Optional[int]) -> str:
+def human_mb(nbytes):
     if nbytes is None:
         return "-"
     return f"~{(nbytes/1024/1024):.1f}"
 
 
-def safe_dt(o) -> str:
+def safe_dt(o):
     try:
         return o.strftime(ISO)
     except Exception:
@@ -46,7 +45,7 @@ def retry(fn, *, retries=1, delay=0.8, on_fail=None):
             raise
 
 
-def validate_region(region: Optional[str]) -> Optional[str]:
+def validate_region(region):
     if not region:
         return None
     all_regions = set(boto3.session.Session().get_available_regions("ec2"))
@@ -56,7 +55,7 @@ def validate_region(region: Optional[str]) -> Optional[str]:
     return region
 
 
-def make_session(region: Optional[str]):
+def make_session(region):
     try:
         session = boto3.session.Session(region_name=region)
         sts = session.client("sts", config=Config(retries={"max_attempts": 2}))
@@ -76,8 +75,8 @@ def make_session(region: Optional[str]):
         sys.exit(1)
 
 
-def list_iam_users(session) -> List[Dict[str, Any]]:
-    users: List[Dict[str, Any]] = []
+def list_iam_users(session):
+    users = []
     try:
         iam = session.client("iam")
         paginator = iam.get_paginator("list_users")
@@ -93,7 +92,6 @@ def list_iam_users(session) -> List[Dict[str, Any]]:
                 except Exception:
                     pass
 
-                # attached policies
                 policies = []
                 try:
                     resp = iam.list_attached_user_policies(UserName=username)
@@ -119,8 +117,8 @@ def list_iam_users(session) -> List[Dict[str, Any]]:
     return users
 
 
-def list_ec2_instances(session) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
+def list_ec2_instances(session):
+    out = []
     try:
         ec2 = session.client("ec2", config=Config(retries={"max_attempts": 2}))
         paginator = ec2.get_paginator("describe_instances")
@@ -167,7 +165,7 @@ def list_ec2_instances(session) -> List[Dict[str, Any]]:
     return out
 
 
-def approx_s3_bucket_stats(session, bucket: str, region_hint: Optional[str]) -> Dict[str, Any]:
+def approx_s3_bucket_stats(session, bucket, region_hint):
     s3 = session.client("s3", region_name=region_hint)
     key_count = 0
     size_bytes = 0
@@ -194,8 +192,8 @@ def approx_s3_bucket_stats(session, bucket: str, region_hint: Optional[str]) -> 
     return {"object_count": key_count, "size_bytes": size_bytes}
 
 
-def list_s3_buckets(session, region: Optional[str]) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
+def list_s3_buckets(session, region):
+    out = []
     try:
         s3 = session.client("s3")
         resp = retry(lambda: s3.list_buckets(), retries=1)
@@ -223,8 +221,8 @@ def list_s3_buckets(session, region: Optional[str]) -> List[Dict[str, Any]]:
     return out
 
 
-def list_security_groups(session) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
+def list_security_groups(session):
+    out = []
     try:
         ec2 = session.client("ec2")
         paginator = ec2.get_paginator("describe_security_groups")
@@ -264,8 +262,7 @@ def list_security_groups(session) -> List[Dict[str, Any]]:
         eprint(f"WARNING EC2 security group describe failed: {code}.")
     return out
 
-def json_report(account_id: str, user_arn: str, region: Optional[str],
-                iam_users, ec2_instances, s3_buckets, sec_groups) -> Dict[str, Any]:
+def json_report(account_id, user_arn, region, iam_users, ec2_instances, s3_buckets, sec_groups):
     return {
         "account_info": {
             "account_id": account_id,
@@ -288,7 +285,7 @@ def json_report(account_id: str, user_arn: str, region: Optional[str],
     }
 
 
-def table_print(report: Dict[str, Any]) -> None:
+def table_print(report) -> None:
     acct = report["account_info"]["account_id"]
     region = report["account_info"]["region"]
     ts = report["account_info"]["scan_timestamp"]

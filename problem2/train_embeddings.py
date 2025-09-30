@@ -1,17 +1,16 @@
 import argparse, json, os, re, time
 from collections import Counter
-from typing import List, Dict
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-def clean_text(text: str) -> List[str]:
+def clean_text(text):
     text = text.lower()
     text = re.sub(r"[^a-z\s]", " ", text)
     words = [w for w in text.split() if len(w) >= 2]
     return words
 
-def build_vocab(texts: List[str], k:int=5000):
+def build_vocab(texts, k = 5000):
     cnt = Counter()
     for t in texts:
         cnt.update(clean_text(t))
@@ -20,7 +19,7 @@ def build_vocab(texts: List[str], k:int=5000):
     idx_to_vocab = {str(i):w for w,i in vocab_to_idx.items()}
     return vocab_to_idx, idx_to_vocab, sum(cnt.values())
 
-def texts_to_bow(texts: List[str], vocab_to_idx: Dict[str,int], vocab_size:int):
+def texts_to_bow(texts, vocab_to_idx, vocab_size):
     bows = torch.zeros((len(texts), vocab_size), dtype=torch.float32)
     for i, t in enumerate(texts):
         for w in clean_text(t):
@@ -32,7 +31,7 @@ def texts_to_bow(texts: List[str], vocab_to_idx: Dict[str,int], vocab_size:int):
 
 
 class TextAutoencoder(nn.Module):
-    def __init__(self, vocab_size:int, hidden_dim:int, embedding_dim:int):
+    def __init__(self, vocab_size, hidden_dim, embedding_dim):
         super().__init__()
         self.encoder = nn.Sequential(
             nn.Linear(vocab_size, hidden_dim),
@@ -51,11 +50,11 @@ class TextAutoencoder(nn.Module):
         x_hat = self.decoder(z)
         return x_hat, z
 
-def count_params(m: nn.Module) -> int:
+def count_params(m):
     return sum(p.numel() for p in m.parameters())
 
 
-def load_abstracts(papers_path: str):
+def load_abstracts(papers_path):
     with open(papers_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     ids, texts = [], []
@@ -107,7 +106,7 @@ def main():
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)
     loss_fn = nn.BCELoss()
 
-    print("\nTraining autoencoder...")
+    print("Training autoencoder")
     start = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     for ep in range(1, args.epochs+1):
         model.train()
