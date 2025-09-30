@@ -1,4 +1,8 @@
-import argparse, json, os, re, time
+import argparse
+import json
+import os
+import re
+import datetime
 from collections import Counter
 import torch
 import torch.nn as nn
@@ -107,7 +111,7 @@ def main():
     loss_fn = nn.BCELoss()
 
     print("Training autoencoder")
-    start = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    start = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     for ep in range(1, args.epochs+1):
         model.train()
         loss_sum = 0.0
@@ -121,7 +125,7 @@ def main():
         avg = loss_sum / len(ds)
         if ep % 10 == 0 or ep == 1 or ep == args.epochs:
             print(f"Epoch {ep}/{args.epochs}, Loss: {avg:.4f}")
-    end = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    end = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     model.eval()
     with torch.no_grad():

@@ -1,5 +1,5 @@
 import argparse
-import datetime as dt
+import datetime
 import json
 import os
 import sys
@@ -12,7 +12,7 @@ from botocore.exceptions import ClientError, EndpointConnectionError, NoCredenti
 ISO = "%Y-%m-%dT%H:%M:%SZ"
 
 def utc_now_iso():
-    return dt.datetime.utcnow().strftime(ISO)
+    return datetime.datetime.utcnow().strftime(ISO)
 
 
 def human_mb(nbytes):
